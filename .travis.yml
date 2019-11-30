@@ -1,0 +1,40 @@
+language: java
+
+addons:
+  chrome: stable
+
+before_install:
+  - pwd
+  # - chmod 777 ./src/test/resources/drivers/chromedriver.exe
+  # - chmod 777 ./target/test-classes/drivers/chromedriver.exe
+  - wget https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip
+  #- wget https://chromedriver.storage.googleapis.com/79.0.3945.16/chromedriver_linux64.zip
+  # https://chromedriver.storage.googleapis.com/79.0.3945.16/chromedriver_linux64.zip
+  - unzip chromedriver_linux64.zip
+  # - chmod 777 /home/travis/build/pavelgloss/seleniumexample/chromedriver
+  - "ls -la"
+  # - wget https://selenium-release.storage.googleapis.com/3.13/selenium-server-standalone-3.13.0.jar
+  # start your web application and listen on `localhost`
+  - google-chrome-stable --headless --disable-gpu --remote-debugging-port=9222 http://localhost &
+  #  - xvfb-run java -Dwebdriver.chrome.driver=/home/travis/build/pavelgloss/seleniumexample/chromedriver -jar selenium-server-standalone-3.13.0.jar
+  - echo $TRAVIS_COMMIT
+  - echo $TRAVIS_TAG
+  - echo $TRAVIS_BRANCH
+  - echo $TRAVIS_BUILD_NUMBER
+  - echo $TRAVIS_REPO_SLUG
+
+cache:
+  directories:
+    - $HOME/.m2
+
+install: true
+
+script:
+  - "mvn verify"
+#script: ./mvnw clean install
+#before_script:
+#  - wget http://chromedriver.storage.googleapis.com/2.24/chromedriver_linux64.zip
+#  - unzip chromedriver_linux64.zip -d /home/travis/virtualenv/python2.7.12/bin/
+#  - export CHROME_BIN=chromium-browser
+#script:
+#- "mvn compile"
