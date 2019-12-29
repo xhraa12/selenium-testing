@@ -108,55 +108,42 @@ public class TasksTest {
         // given
         driver.manage().window().maximize();
         auth.login(auth.username, auth.password);
+        Task task = new Task(
+            "Task",
+            "xhraa12",
+            "New",
+            "Medium",
+            "ABC"
+        );
         // when
         this.navigateToMyProjectPage();
-        String taskName = "xhraa12";
         this.openCreateTaskDialogue();
         // Fil in the form
-        String taskType = "Task";
-        String taskStatus = "New";
-        String taskPriority = "Medium";
-        String taskDescription = "ABC";
-        Util.waitFor(driver, By.cssSelector("#fields_168"))
-            .sendKeys(taskName);
-        new Select(Util.waitFor(driver, By.cssSelector("#fields_167")))
-            .selectByVisibleText(taskType);
-        new Select(Util.waitFor(driver, By.cssSelector("#fields_169")))
-            .selectByVisibleText(taskStatus);
-        new Select(Util.waitFor(driver, By.cssSelector("#fields_170")))
-            .selectByVisibleText(taskPriority);
-        // To edit description, we need to switch to iframe and back
-        driver.switchTo().frame(driver.findElement(By.cssSelector("#cke_1_contents > iframe")));
-        driver.findElement(By.cssSelector("body"))
-            .sendKeys(taskDescription);
-        driver.switchTo().defaultContent();
-        // Submit the form
-        Util.waitFor(driver, By.cssSelector("#items_form > div.modal-footer > button.btn.btn-primary.btn-primary-modal-action"))
-            .click();
+        this.createTask(task);
         // Select Info i
-        Util.waitFor(driver, By.xpath(String.format("//*[text()=\"%s\"]/../..//*[@title=\"Info\"]", taskName)))
+        Util.waitFor(driver, By.xpath(String.format("//*[text()=\"%s\"]/../..//*[@title=\"Info\"]", task.name)))
             .click();
         // Check created info table data
         Assert.assertEquals(
             Util.waitFor(driver, By.cssSelector("body > div.page-container > div.page-content-wrapper > div > div > div.row > div > div:nth-child(3) > div.col-md-4 > div > div > div:nth-child(2) > table > tbody > tr.form-group-167 > td > div"))
                 .getText(),
-            taskType);
+            task.type);
         Assert.assertEquals(
             Util.waitFor(driver, By.cssSelector("body > div.page-container > div.page-content-wrapper > div > div > div.row > div > div:nth-child(3) > div.col-md-4 > div > div > div:nth-child(2) > table > tbody > tr.form-group-169 > td > div"))
                 .getText(),
-            taskStatus);
+            task.status);
         Assert.assertEquals(
             Util.waitFor(driver, By.cssSelector("body > div.page-container > div.page-content-wrapper > div > div > div.row > div > div:nth-child(3) > div.col-md-4 > div > div > div:nth-child(2) > table > tbody > tr.form-group-170 > td > div"))
                 .getText(),
-            taskPriority);
+            task.priority);
         Assert.assertEquals(
             Util.waitFor(driver, By.cssSelector("body > div.page-container > div.page-content-wrapper > div > div > div.row > div > div:nth-child(3) > div.col-md-8.project-info > div.portlet.portlet-item-description > div.portlet-title > div.caption"))
                 .getText(),
-            taskName);
+            task.name);
         Assert.assertEquals(
             Util.waitFor(driver, By.cssSelector("body > div.page-container > div.page-content-wrapper > div > div > div.row > div > div:nth-child(3) > div.col-md-8.project-info > div.portlet.portlet-item-description > div.portlet-body > div.item-content-box.ckeditor-images-content-prepare > div > div.content_box_content.fieldtype_textarea_wysiwyg"))
                 .getText(),
-            taskDescription);
+            task.description);
         // Select Delete from More actions
         Util.waitFor(driver, By.cssSelector("body > div.page-container > div.page-content-wrapper > div > div > div.row > div > div:nth-child(3) > div.col-md-8.project-info > div.portlet.portlet-item-description > div.portlet-body > div.prolet-body-actions > ul > li:nth-child(2) > div > button"))
             .click();
@@ -174,8 +161,7 @@ public class TasksTest {
         );
     }
 
-    public void resetTasks() {
-        // Clear filters
+    public void clearTasksFilters() {
         // If there is a thrashcan in Filters box
         List<WebElement> thrashcans = Util.waitFor(driver, By.cssSelector(".portlet.portlet-filters-preview.noprint"))
                 .findElements(By.cssSelector(".fa.fa-trash-o"));
@@ -183,19 +169,29 @@ public class TasksTest {
             // Click it to remove all filters
             thrashcans.get(0).click();
         }
-        // Delete all items
-        // Check all items
-        Util.waitFor(driver, By.cssSelector(".select_all_items"))
-            .click();
-        // Open With Selected dropdown
-        Util.waitFor(driver, By.cssSelector(".btn.btn-default.dropdown-toggle"))
-            .click();
-        // Click Delete
-        Util.waitFor(driver, By.cssSelector(".entitly-listing-buttons-left .fa.fa-trash-o"))
-            .click();
-        // Confirm
-        Util.waitFor(driver, By.cssSelector(".btn.btn-primary.btn-primary-modal-action"))
-            .click();
+        Util.waitFor(driver, By.cssSelector(".select_all_items"));
+    }
+    public void resetTasks() {
+        this.clearTasksFilters();
+        // If there are no items, skip deletion
+        int tasksCount = driver
+            .findElements(By.cssSelector(".item_heading_link"))
+            .size();
+        if (tasksCount > 0) {
+            // Delete all items
+            // Check all items
+            Util.waitFor(driver, By.cssSelector(".select_all_items"))
+                    .click();
+            // Open With Selected dropdown
+            Util.waitFor(driver, By.cssSelector(".btn.btn-default.dropdown-toggle"))
+                    .click();
+            // Click Delete
+            Util.waitFor(driver, By.cssSelector(".entitly-listing-buttons-left .fa.fa-trash-o"))
+                    .click();
+            // Confirm
+            Util.waitFor(driver, By.cssSelector(".btn.btn-primary.btn-primary-modal-action"))
+                    .click();
+        }
     }
     @Test
     public void typeTasksTest() {
@@ -214,7 +210,6 @@ public class TasksTest {
         };
         this.navigateToMyProjectPage();
         this.resetTasks();
-        By tasksItemsSelector = By.cssSelector(".item_heading_link");
         // When
         // Create each task from data list
         for (Task task: data) {
@@ -230,25 +225,47 @@ public class TasksTest {
         // Select Default Filters
         Util.waitFor(driver, By.cssSelector("body > div.page-container > div.page-content-wrapper > div > div > div.row > div > div.portlet.portlet-filters-preview.noprint > div.portlet-title > div.caption > div:nth-child(1) > ul > li:nth-child(1) > a"))
             .click();
+        // Wait for filter to apply
+        Util.waitFor(driver, By.cssSelector(".filters-preview-condition-include"));
         // Then
         // Only three tasks are shown in the list
         Assert.assertEquals(
-            Util.waitFor(driver, tasksItemsSelector)
-                .findElements(By.cssSelector("*"))
+            driver
+                .findElements(By.cssSelector(".item_heading_link"))
                 .size(),
             3
         );
 
-
+        // When
+        // Change Status filter: Remove Open
+        // Open Default filter dialogue
+        Util.waitFor(driver, By.cssSelector(".filters-preview-condition-include"))
+            .click();
+        // Click "x" on Open filter to remove it
+        Util.waitFor(driver, By.xpath("//*[@class=\"search-choice\"]/span[text()=\"Open\"]/../a"))
+            .click();
+        // Save to close the dialogue and apply new filter
+        Util.waitFor(driver, By.cssSelector(".btn.btn-primary.btn-primary-modal-action"))
+            .click();
+        // Wait for filter to apply
+        Util.waitFor(driver, By.cssSelector(".filters-preview-condition-include"));
         // Then
+        // Only New and Waiting are in the list
+        for (WebElement listItem: driver.findElements(By.cssSelector(".fieldtype_dropdown.field-169-td"))) {
+            Assert.assertEquals(listItem.getText() == "New" || listItem.getText() == "Waiting", true);
+        }
 
-        // Each created task is found in the tasks list
-//        for (Task task: data) {
-//            Assert.assertEquals(
-//                Util.waitFor(driver, By.cssSelector(String.format("//*[@class=\"item_heading_link\" and text()=\"%s\"]", task.name)))
-//                    .getText(),
-//                task.name
-//            );
-//        }
+        // When
+        // All filters are cleared
+        this.clearTasksFilters();
+        // Then
+        // All created tasks appear
+        for (Task task: data) {
+            Assert.assertEquals(
+                Util.waitFor(driver, By.xpath(String.format("//*[@class=\"item_heading_link\" and text()=\"%s\"]", task.name)))
+                    .getText(),
+                task.name
+            );
+        }
     }
 }
